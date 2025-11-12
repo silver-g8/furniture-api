@@ -6,6 +6,11 @@ namespace App\Docs;
 
 use OpenApi\Attributes as OA;
 
+#[OA\OpenApi(
+    security: [
+        ['bearerAuth' => []],
+    ],
+)]
 #[OA\Info(
     version: '1.0.0',
     title: 'Furniture System API',
@@ -36,7 +41,6 @@ use OpenApi\Attributes as OA;
     scheme: 'bearer',
     bearerFormat: 'Sanctum PAT'
 )]
-#[OA\SecurityRequirement(name: 'bearerAuth')]
 #[OA\Tag(
     name: 'Auth',
     description: 'Authentication and authorization endpoints'

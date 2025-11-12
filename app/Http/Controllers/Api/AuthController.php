@@ -10,8 +10,11 @@ use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
+use Laravel\Sanctum\PersonalAccessToken;
 use OpenApi\Attributes as OA;
 
 class AuthController extends Controller
@@ -121,12 +124,34 @@ class AuthController extends Controller
     )]
     public function me(Request $request): JsonResponse
     {
-        /** @var User $user */
-        $user = $request->user()->loadMissing('roles');
+        $token = $request->bearerToken();
+
+        if ($token !== null && PersonalAccessToken::findToken($token) === null) {
+            return $this->respondError(
+                'ไม่มีสิทธิ์เข้าถึง',
+                'AUTH_TOKEN_INVALID',
+                [],
+                401,
+            );
+        }
+
+        /** @var User|null $user */
+        $user = $request->user();
+
+        if (! $user instanceof User) {
+            return $this->respondError(
+                'ไม่มีสิทธิ์เข้าถึง',
+                'AUTH_UNAUTHENTICATED',
+                [],
+                401,
+            );
+        }
+
+        $user->loadMissing('roles');
 
         return $this->respondSuccess([
             'user' => UserResource::make($user)->resolve(),
-        ], 'à¹‚à¸«à¸¥à¸”à¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¸œà¸¹à¹‰à¹ƒà¸Šà¹‰à¸ªà¸³à¹€à¸£à¹‡à¸ˆ');
+        ], 'โหลดข้อมูลผู้ใช้สำเร็จ');
     }
 
     #[OA\Post(
@@ -155,8 +180,29 @@ class AuthController extends Controller
     )]
     public function logout(Request $request): JsonResponse
     {
-        $request->user()?->currentAccessToken()?->delete();
+        $accessToken = $request->user()?->currentAccessToken();
 
-        return $this->respondSuccess(null, 'à¸­à¸­à¸à¸ˆà¸²à¸à¸£à¸°à¸šà¸šà¸ªà¸³à¹€à¸£à¹‡à¸ˆ');
+        if ($accessToken !== null) {
+            $accessToken->delete();
+        } else {
+            $token = $request->bearerToken();
+            if ($token) {
+                $plain = Str::contains($token, '|')
+                    ? explode('|', $token, 2)[1]
+                    : $token;
+
+                $hashed = hash('sha256', $plain);
+                PersonalAccessToken::where('token', $hashed)->delete();
+            }
+        }
+
+        Auth::guard('web')->logout();
+
+        if ($request->hasSession()) {
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+        }
+
+        return $this->respondSuccess(null, 'ออกจากระบบสำเร็จ');
     }
 }

@@ -12,6 +12,9 @@ abstract class Controller
 {
     use AuthorizesRequests;
 
+    /**
+     * @param  array<string, string>  $headers
+     */
     protected function respondSuccess(mixed $data = null, string $message = 'OK', int $status = 200, array $headers = []): JsonResponse
     {
         return new JsonResponse([
@@ -20,6 +23,10 @@ abstract class Controller
         ], $status, $headers);
     }
 
+    /**
+     * @param  array<string, mixed>  $errors
+     * @param  array<string, string>  $headers
+     */
     protected function respondError(string $message, string $code = 'ERROR', array $errors = [], int $status = 400, array $headers = []): JsonResponse
     {
         return new JsonResponse([

@@ -8,6 +8,8 @@ use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\GoodsReceiptController;
 use App\Http\Controllers\Api\InstallationOrderController;
+use App\Http\Controllers\Api\Options\BrandsOptionsController;
+use App\Http\Controllers\Api\Options\CategoriesOptionsController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\PingController;
@@ -27,8 +29,10 @@ Route::prefix('v1')->group(function () {
         Route::post('login', [AuthController::class, 'login'])->name('auth.login');
 
         Route::middleware('auth:sanctum')->group(function () {
-            Route::get('me', [AuthController::class, 'me'])->name('auth.me');
-            Route::post('logout', [AuthController::class, 'logout'])->name('auth.logout');
+            Route::get('me', [AuthController::class, 'me'])
+                ->name('auth.me');
+            Route::post('logout', [AuthController::class, 'logout'])
+                ->name('auth.logout');
         });
     });
 
@@ -36,7 +40,10 @@ Route::prefix('v1')->group(function () {
         Route::get('user', fn (Request $request) => $request->user());
 
         // Catalog routes
+        Route::get('products/meta', [ProductController::class, 'meta'])->name('products.meta');
+        Route::get('brands/options', BrandsOptionsController::class)->name('brands.options');
         Route::apiResource('brands', BrandController::class);
+        Route::get('categories/options', CategoriesOptionsController::class)->name('categories.options');
         Route::apiResource('categories', CategoryController::class);
         Route::apiResource('products', ProductController::class);
         Route::get('dashboard', DashboardController::class)->name('dashboard.show');

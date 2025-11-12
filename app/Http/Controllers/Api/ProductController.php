@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Catalog\ProductStoreRequest;
 use App\Http\Requests\Catalog\ProductUpdateRequest;
+use App\Http\Resources\ProductMetaResource;
 use App\Models\Product;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
@@ -95,7 +96,7 @@ class ProductController extends Controller
 
         $search = isset($validated['search']) ? trim((string) $validated['search']) : null;
         if ($search !== null && $search !== '') {
-            $likeSearch = '%' . $search . '%';
+            $likeSearch = '%'.$search.'%';
             $query->where(static function ($builder) use ($likeSearch): void {
                 $builder
                     ->where('name', 'like', $likeSearch)
@@ -280,5 +281,161 @@ class ProductController extends Controller
         $product->delete();
 
         return response()->noContent();
+    }
+
+    #[OA\Get(
+        path: '/api/v1/products/meta',
+        summary: 'Get product UI metadata',
+        description: 'Returns field configuration for index, create/edit form, and detail views',
+        security: [['bearerAuth' => []]],
+        tags: ['Catalog'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Product UI metadata',
+                content: new OA\JsonContent(ref: '#/components/schemas/ProductMeta')
+            ),
+            new OA\Response(
+                response: 401,
+                description: 'Unauthenticated',
+                content: new OA\JsonContent(ref: '#/components/schemas/Error')
+            ),
+        ]
+    )]
+    public function meta(): JsonResponse
+    {
+        $this->authorize('viewAny', Product::class);
+
+        $meta = [
+            'index_fields' => [
+                'sku',
+                'name',
+                'category_name',
+                'brand_name',
+                'price',
+                'status',
+                'actions',
+            ],
+            'form_fields' => [
+                [
+                    'key' => 'sku',
+                    'label' => 'catalog.products.fields.sku',
+                    'component' => 'q-input',
+                    'rules' => ['required'],
+                    'props' => [
+                        'type' => 'text',
+                    ],
+                ],
+                [
+                    'key' => 'name',
+                    'label' => 'catalog.products.fields.name',
+                    'component' => 'q-input',
+                    'rules' => ['required'],
+                    'props' => [
+                        'type' => 'text',
+                    ],
+                ],
+                [
+                    'key' => 'slug',
+                    'label' => 'catalog.products.fields.slug',
+                    'component' => 'q-input',
+                    'rules' => ['required'],
+                    'props' => [
+                        'type' => 'text',
+                    ],
+                ],
+                [
+                    'key' => 'description',
+                    'label' => 'catalog.products.fields.description',
+                    'component' => 'q-input',
+                    'rules' => [],
+                    'props' => [
+                        'type' => 'textarea',
+                    ],
+                ],
+                [
+                    'key' => 'status',
+                    'label' => 'catalog.products.fields.status',
+                    'component' => 'q-select',
+                    'rules' => ['required'],
+                    'props' => [
+                        'option_source' => 'statuses',
+                    ],
+                ],
+                [
+                    'key' => 'price',
+                    'label' => 'catalog.products.fields.price',
+                    'component' => 'q-input',
+                    'rules' => ['required', 'numeric'],
+                    'props' => [
+                        'type' => 'number',
+                        'min' => 0,
+                        'step' => '0.01',
+                    ],
+                ],
+                [
+                    'key' => 'cost',
+                    'label' => 'catalog.products.fields.cost',
+                    'component' => 'q-input',
+                    'rules' => ['numeric'],
+                    'props' => [
+                        'type' => 'number',
+                        'min' => 0,
+                        'step' => '0.01',
+                    ],
+                ],
+                [
+                    'key' => 'category_id',
+                    'label' => 'catalog.products.fields.category',
+                    'component' => 'q-select',
+                    'rules' => ['required'],
+                    'props' => [
+                        'option_source' => 'categories',
+                        'option_value' => 'id',
+                        'option_label' => 'name',
+                    ],
+                ],
+                [
+                    'key' => 'brand_id',
+                    'label' => 'catalog.products.fields.brand',
+                    'component' => 'q-select',
+                    'rules' => [],
+                    'props' => [
+                        'option_source' => 'brands',
+                        'option_value' => 'id',
+                        'option_label' => 'name',
+                    ],
+                ],
+                [
+                    'key' => 'imageUrl',
+                    'label' => 'catalog.products.fields.imageUrl',
+                    'component' => 'q-input',
+                    'rules' => [],
+                    'props' => [
+                        'type' => 'text',
+                    ],
+                ],
+                [
+                    'key' => 'meta',
+                    'label' => 'catalog.products.fields.meta',
+                    'component' => 'q-input',
+                    'rules' => [],
+                    'props' => [
+                        'type' => 'textarea',
+                    ],
+                ],
+            ],
+            'show_fields' => [
+                'sku',
+                'status',
+                'category_name',
+                'brand_name',
+                'price',
+                'on_hand',
+                'description',
+            ],
+        ];
+
+        return response()->json((new ProductMetaResource($meta))->toArray(request()));
     }
 }

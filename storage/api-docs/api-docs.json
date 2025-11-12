@@ -535,35 +535,11 @@
                             "application/json": {
                                 "schema": {
                                     "properties": {
-                                        "token": {
-                                            "type": "string",
-                                            "example": "1|abcdef123456..."
+                                        "data": {
+                                            "$ref": "#/components/schemas/AuthLoginSuccess"
                                         },
-                                        "user": {
-                                            "properties": {
-                                                "id": {
-                                                    "type": "integer",
-                                                    "example": 1
-                                                },
-                                                "name": {
-                                                    "type": "string",
-                                                    "example": "Admin User"
-                                                },
-                                                "email": {
-                                                    "type": "string",
-                                                    "example": "admin@example.com"
-                                                },
-                                                "roles": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "string"
-                                                    },
-                                                    "example": [
-                                                        "admin"
-                                                    ]
-                                                }
-                                            },
-                                            "type": "object"
+                                        "message": {
+                                            "type": "string"
                                         }
                                     },
                                     "type": "object"
@@ -571,8 +547,18 @@
                             }
                         }
                     },
-                    "422": {
+                    "401": {
                         "description": "Invalid credentials",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too many attempts",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -599,8 +585,11 @@
                             "application/json": {
                                 "schema": {
                                     "properties": {
-                                        "user": {
-                                            "$ref": "#/components/schemas/User"
+                                        "data": {
+                                            "$ref": "#/components/schemas/AuthMeSuccess"
+                                        },
+                                        "message": {
+                                            "type": "string"
                                         }
                                     },
                                     "type": "object"
@@ -640,7 +629,16 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/SuccessMessage"
+                                    "properties": {
+                                        "data": {
+                                            "type": "null",
+                                            "nullable": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
                                 }
                             }
                         }
@@ -1467,6 +1465,86 @@
                 ]
             }
         },
+        "/api/v1/brands/options": {
+            "get": {
+                "tags": [
+                    "Catalog"
+                ],
+                "summary": "List brand options",
+                "description": "Return lightweight brand options for dropdowns",
+                "operationId": "4ae6991075c0ecac34afb10e8dc7373f",
+                "responses": {
+                    "200": {
+                        "description": "List of brands formatted for select components",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Option"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/categories/options": {
+            "get": {
+                "tags": [
+                    "Catalog"
+                ],
+                "summary": "List category options",
+                "description": "Return lightweight category options for dropdowns",
+                "operationId": "2fca5dd3af7cae9189a9df3ebb6a1344",
+                "responses": {
+                    "200": {
+                        "description": "List of categories formatted for select components",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Option"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/ping": {
             "get": {
                 "tags": [
@@ -1884,6 +1962,43 @@
                     }
                 ]
             }
+        },
+        "/api/v1/products/meta": {
+            "get": {
+                "tags": [
+                    "Catalog"
+                ],
+                "summary": "Get product UI metadata",
+                "description": "Returns field configuration for index, create/edit form, and detail views",
+                "operationId": "e3f3ac2fba88de24a99237d6c328a325",
+                "responses": {
+                    "200": {
+                        "description": "Product UI metadata",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProductMeta"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
         }
     },
     "components": {
@@ -2270,6 +2385,101 @@
                 },
                 "type": "object"
             },
+            "UserSummary": {
+                "title": "User Summary",
+                "description": "Authenticated user payload",
+                "required": [
+                    "id",
+                    "name",
+                    "email",
+                    "roles"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Admin User"
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "example": "admin@example.com"
+                    },
+                    "roles": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "example": [
+                            "admin"
+                        ]
+                    },
+                    "permissions": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "nullable": true
+                    },
+                    "avatar_url": {
+                        "type": "string",
+                        "format": "uri",
+                        "nullable": true
+                    },
+                    "last_login_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "AuthLoginSuccess": {
+                "title": "Login Success Payload",
+                "description": "Data payload returned when login succeeds",
+                "required": [
+                    "token",
+                    "tokenType",
+                    "expiresIn",
+                    "user"
+                ],
+                "properties": {
+                    "token": {
+                        "type": "string",
+                        "example": "1|abcdef1234567890"
+                    },
+                    "tokenType": {
+                        "type": "string",
+                        "example": "Bearer"
+                    },
+                    "expiresIn": {
+                        "description": "Expiration window (seconds) or null when no expiry is configured",
+                        "type": "integer",
+                        "example": 7200,
+                        "nullable": true
+                    },
+                    "user": {
+                        "$ref": "#/components/schemas/UserSummary"
+                    }
+                },
+                "type": "object"
+            },
+            "AuthMeSuccess": {
+                "title": "Current User Payload",
+                "description": "Data payload returned from /auth/me endpoint",
+                "required": [
+                    "user"
+                ],
+                "properties": {
+                    "user": {
+                        "$ref": "#/components/schemas/UserSummary"
+                    }
+                },
+                "type": "object"
+            },
             "User": {
                 "title": "User",
                 "description": "User entity",
@@ -2386,6 +2596,109 @@
                 },
                 "type": "object"
             },
+            "ProductFormField": {
+                "title": "Product Form Field Definition",
+                "description": "Configuration for a product form field",
+                "required": [
+                    "key",
+                    "label",
+                    "component",
+                    "rules",
+                    "props"
+                ],
+                "properties": {
+                    "key": {
+                        "type": "string",
+                        "example": "name"
+                    },
+                    "label": {
+                        "type": "string",
+                        "example": "catalog.products.fields.name"
+                    },
+                    "component": {
+                        "type": "string",
+                        "example": "q-input"
+                    },
+                    "rules": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "example": [
+                            "required"
+                        ]
+                    },
+                    "props": {
+                        "type": "object",
+                        "example": {
+                            "type": "text"
+                        },
+                        "additionalProperties": true
+                    }
+                },
+                "type": "object"
+            },
+            "ProductMeta": {
+                "title": "Product UI Metadata",
+                "description": "Metadata describing how to render product screens",
+                "required": [
+                    "index_fields",
+                    "form_fields",
+                    "show_fields"
+                ],
+                "properties": {
+                    "index_fields": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "example": [
+                            "sku",
+                            "name",
+                            "category_name",
+                            "brand_name",
+                            "price",
+                            "status",
+                            "actions"
+                        ]
+                    },
+                    "form_fields": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ProductFormField"
+                        },
+                        "example": [
+                            {
+                                "key": "name",
+                                "label": "catalog.products.fields.name",
+                                "component": "q-input",
+                                "rules": [
+                                    "required"
+                                ],
+                                "props": {
+                                    "type": "text"
+                                }
+                            }
+                        ]
+                    },
+                    "show_fields": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "example": [
+                            "sku",
+                            "status",
+                            "category_name",
+                            "brand_name",
+                            "price",
+                            "on_hand",
+                            "description"
+                        ]
+                    }
+                },
+                "type": "object"
+            },
             "Category": {
                 "title": "Category",
                 "description": "Product category",
@@ -2413,6 +2726,26 @@
                     "slug": {
                         "type": "string",
                         "example": "living-room"
+                    }
+                },
+                "type": "object"
+            },
+            "Option": {
+                "title": "Select Option",
+                "description": "Lightweight option item for dropdowns",
+                "required": [
+                    "id",
+                    "name"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Living Room"
                     }
                 },
                 "type": "object"
@@ -3105,10 +3438,10 @@
         "securitySchemes": {
             "bearerAuth": {
                 "type": "http",
-                "description": "Enter your Bearer token in the format: Bearer {token}",
+                "description": "Personal Access Token issued by Laravel Sanctum. Use the format: Bearer {token}",
                 "name": "Authorization",
                 "in": "header",
-                "bearerFormat": "JWT",
+                "bearerFormat": "Sanctum PAT",
                 "scheme": "bearer"
             }
         }

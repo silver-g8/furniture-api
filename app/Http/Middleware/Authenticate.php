@@ -19,4 +19,3 @@ class Authenticate extends Middleware
         return config('app.front_login_url', '/auth/login');
     }
 }
-
