@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
+
 use function Pest\Laravel\postJson;
 
 it('allows valid credentials and returns personal access token', function () {
@@ -13,7 +14,7 @@ it('allows valid credentials and returns personal access token', function () {
         'password' => Hash::make('secret123'),
     ]);
 
-    RateLimiter::clear($user->email . '|127.0.0.1');
+    RateLimiter::clear($user->email.'|127.0.0.1');
 
     $response = postJson('/api/v1/auth/login', [
         'email' => $user->email,

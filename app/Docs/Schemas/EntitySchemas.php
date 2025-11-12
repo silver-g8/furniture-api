@@ -40,6 +40,63 @@ use OpenApi\Attributes as OA;
     ]
 )]
 #[OA\Schema(
+    schema: 'ProductFormField',
+    title: 'Product Form Field Definition',
+    description: 'Configuration for a product form field',
+    required: ['key', 'label', 'component', 'rules', 'props'],
+    properties: [
+        new OA\Property(property: 'key', type: 'string', example: 'name'),
+        new OA\Property(property: 'label', type: 'string', example: 'catalog.products.fields.name'),
+        new OA\Property(property: 'component', type: 'string', example: 'q-input'),
+        new OA\Property(
+            property: 'rules',
+            type: 'array',
+            items: new OA\Items(type: 'string'),
+            example: ['required']
+        ),
+        new OA\Property(
+            property: 'props',
+            type: 'object',
+            additionalProperties: true,
+            example: ['type' => 'text']
+        ),
+    ]
+)]
+#[OA\Schema(
+    schema: 'ProductMeta',
+    title: 'Product UI Metadata',
+    description: 'Metadata describing how to render product screens',
+    required: ['index_fields', 'form_fields', 'show_fields'],
+    properties: [
+        new OA\Property(
+            property: 'index_fields',
+            type: 'array',
+            items: new OA\Items(type: 'string'),
+            example: ['sku', 'name', 'category_name', 'brand_name', 'price', 'status', 'actions']
+        ),
+        new OA\Property(
+            property: 'form_fields',
+            type: 'array',
+            items: new OA\Items(ref: '#/components/schemas/ProductFormField'),
+            example: [
+                [
+                    'key' => 'name',
+                    'label' => 'catalog.products.fields.name',
+                    'component' => 'q-input',
+                    'rules' => ['required'],
+                    'props' => ['type' => 'text'],
+                ],
+            ]
+        ),
+        new OA\Property(
+            property: 'show_fields',
+            type: 'array',
+            items: new OA\Items(type: 'string'),
+            example: ['sku', 'status', 'category_name', 'brand_name', 'price', 'on_hand', 'description']
+        ),
+    ]
+)]
+#[OA\Schema(
     schema: 'Category',
     title: 'Category',
     description: 'Product category',
@@ -49,6 +106,16 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'parent_id', type: 'integer', format: 'int64', example: null, nullable: true),
         new OA\Property(property: 'name', type: 'string', example: 'Living Room'),
         new OA\Property(property: 'slug', type: 'string', example: 'living-room'),
+    ]
+)]
+#[OA\Schema(
+    schema: 'Option',
+    title: 'Select Option',
+    description: 'Lightweight option item for dropdowns',
+    required: ['id', 'name'],
+    properties: [
+        new OA\Property(property: 'id', type: 'integer', format: 'int64', example: 1),
+        new OA\Property(property: 'name', type: 'string', example: 'Living Room'),
     ]
 )]
 #[OA\Schema(
