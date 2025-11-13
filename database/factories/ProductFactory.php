@@ -27,6 +27,7 @@ class ProductFactory extends Factory
             'sku' => fake()->unique()->bothify('SKU-####-????'),
             'price' => fake()->randomFloat(2, 10, 10000),
             'status' => fake()->randomElement(['draft', 'active', 'inactive', 'archived']),
+            'on_hand' => fake()->numberBetween(0, 100),
         ];
     }
 

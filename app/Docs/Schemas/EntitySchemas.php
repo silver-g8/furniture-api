@@ -24,7 +24,7 @@ use OpenApi\Attributes as OA;
     schema: 'Product',
     title: 'Product',
     description: 'Product entity',
-    required: ['id', 'sku', 'name', 'type', 'status'],
+    required: ['id', 'sku', 'name', 'type', 'status', 'on_hand'],
     properties: [
         new OA\Property(property: 'id', type: 'integer', format: 'int64', example: 1),
         new OA\Property(property: 'type', type: 'string', enum: ['simple', 'configurable'], example: 'simple'),
@@ -35,6 +35,7 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'description', type: 'string', example: 'Comfortable modern sofa', nullable: true),
         new OA\Property(property: 'tax_class', type: 'string', example: 'standard'),
         new OA\Property(property: 'status', type: 'string', enum: ['active', 'inactive'], example: 'active'),
+        new OA\Property(property: 'on_hand', type: 'integer', example: 10, description: 'Current stock on hand'),
         new OA\Property(property: 'created_at', type: 'string', format: 'date-time'),
         new OA\Property(property: 'updated_at', type: 'string', format: 'date-time'),
     ]

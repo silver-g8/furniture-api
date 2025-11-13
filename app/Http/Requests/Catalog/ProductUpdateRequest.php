@@ -31,8 +31,12 @@ class ProductUpdateRequest extends FormRequest
             'brand_id' => ['sometimes', 'nullable', 'exists:brands,id'],
             'name' => ['sometimes', 'string', 'max:255'],
             'sku' => ['sometimes', 'string', 'max:255', Rule::unique('products', 'sku')->ignore($productId)],
+            'description' => ['sometimes', 'nullable', 'string'],
             'price' => ['sometimes', 'numeric', 'min:0'],
+            'cost' => ['sometimes', 'nullable', 'numeric', 'min:0'],
             'status' => ['sometimes', Rule::in(['draft', 'active', 'inactive', 'archived'])],
+            'image_url' => ['sometimes', 'nullable', 'string'],
+            'on_hand' => ['sometimes', 'integer', 'min:0'],
         ];
     }
 }

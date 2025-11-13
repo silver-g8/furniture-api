@@ -8,6 +8,7 @@ use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Str;
 
 class ProductSeeder extends Seeder
 {
@@ -24,6 +25,7 @@ class ProductSeeder extends Seeder
                 'status' => 'active',
                 'category_slug' => 'sofas',
                 'brand_slug' => 'alpha-furniture',
+                'on_hand' => 10,
             ],
             [
                 'sku' => 'ALPHA-SOFA-002',
@@ -32,6 +34,7 @@ class ProductSeeder extends Seeder
                 'status' => 'inactive',
                 'category_slug' => 'sofas',
                 'brand_slug' => 'alpha-furniture',
+                'on_hand' => 0,
             ],
             [
                 'sku' => 'ALPHA-TABLE-001',
@@ -40,6 +43,7 @@ class ProductSeeder extends Seeder
                 'status' => 'active',
                 'category_slug' => 'coffee-tables',
                 'brand_slug' => 'alpha-furniture',
+                'on_hand' => 1,
             ],
             [
                 'sku' => 'ALPHA-TV-001',
@@ -48,6 +52,7 @@ class ProductSeeder extends Seeder
                 'status' => 'active',
                 'category_slug' => 'tv-stands',
                 'brand_slug' => 'alpha-furniture',
+                'on_hand' => 10,
             ],
             [
                 'sku' => 'BETA-BED-001',
@@ -56,6 +61,7 @@ class ProductSeeder extends Seeder
                 'status' => 'active',
                 'category_slug' => 'beds',
                 'brand_slug' => 'beta-living',
+                'on_hand' => 5,
             ],
             [
                 'sku' => 'BETA-WARD-001',
@@ -64,6 +70,7 @@ class ProductSeeder extends Seeder
                 'status' => 'active',
                 'category_slug' => 'wardrobes',
                 'brand_slug' => 'beta-living',
+                'on_hand' => 1,
             ],
             [
                 'sku' => 'CRAFT-DINE-001',
@@ -72,6 +79,7 @@ class ProductSeeder extends Seeder
                 'status' => 'active',
                 'category_slug' => 'dining-sets',
                 'brand_slug' => 'crafted-comfort',
+                'on_hand' => 1,
             ],
             [
                 'sku' => 'CRAFT-BAR-001',
@@ -80,6 +88,7 @@ class ProductSeeder extends Seeder
                 'status' => 'archived',
                 'category_slug' => 'bar-cabinets',
                 'brand_slug' => 'crafted-comfort',
+                'on_hand' => 1,
             ],
             [
                 'sku' => 'NORD-LIGHT-001',
@@ -88,6 +97,7 @@ class ProductSeeder extends Seeder
                 'status' => 'active',
                 'category_slug' => 'ceiling-lights',
                 'brand_slug' => 'nordic-lights',
+                'on_hand' => 1,
             ],
             [
                 'sku' => 'NORD-LAMP-001',
@@ -96,6 +106,7 @@ class ProductSeeder extends Seeder
                 'status' => 'draft',
                 'category_slug' => 'table-lamps',
                 'brand_slug' => 'nordic-lights',
+                'on_hand' => 10,
             ],
             [
                 'sku' => 'LIGHT-FLOOR-001',
@@ -104,6 +115,7 @@ class ProductSeeder extends Seeder
                 'status' => 'active',
                 'category_slug' => 'floor-lamps',
                 'brand_slug' => 'nordic-lights',
+                'on_hand' => 2,
             ],
             [
                 'sku' => 'URBN-PATIO-001',
@@ -112,6 +124,7 @@ class ProductSeeder extends Seeder
                 'status' => 'archived',
                 'category_slug' => 'patio-sets',
                 'brand_slug' => 'urban-retreat',
+                'on_hand' => 1,
             ],
             [
                 'sku' => 'URBN-GARDEN-001',
@@ -120,6 +133,7 @@ class ProductSeeder extends Seeder
                 'status' => 'active',
                 'category_slug' => 'garden-decor',
                 'brand_slug' => 'urban-retreat',
+                'on_hand' => 4,
             ],
             [
                 'sku' => 'DECOR-MIRROR-001',
@@ -128,8 +142,15 @@ class ProductSeeder extends Seeder
                 'status' => 'active',
                 'category_slug' => 'mirrors',
                 'brand_slug' => null,
+                'on_hand' => 1,
             ],
         ];
+
+        $products = array_map(function (array $product): array {
+            $product['image_url'] = $product['image_url'] ?? sprintf('https://cdn.example.com/products/%s.jpg', Str::slug($product['sku']));
+
+            return $product;
+        }, $products);
 
         foreach ($products as $product) {
             $category = Category::where('slug', $product['category_slug'])->first();
@@ -162,6 +183,8 @@ class ProductSeeder extends Seeder
                     'status' => $product['status'],
                     'category_id' => $category->id,
                     'brand_id' => $brandId,
+                    'image_url' => $product['image_url'],
+                    'on_hand' => $product['on_hand'],
                 ]
             );
         }

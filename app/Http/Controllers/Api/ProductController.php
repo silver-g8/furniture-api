@@ -13,6 +13,7 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use OpenApi\Attributes as OA;
@@ -137,18 +138,20 @@ class ProductController extends Controller
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(
-                required: ['type', 'sku', 'name', 'category_id', 'status'],
+                required: ['sku', 'name', 'category_id', 'status', 'price', 'on_hand'],
                 properties: [
-                    new OA\Property(property: 'type', type: 'string', enum: ['simple', 'configurable'], example: 'simple'),
                     new OA\Property(property: 'sku', type: 'string', example: 'SOFA-001'),
                     new OA\Property(property: 'name', type: 'string', example: 'Modern Sofa'),
+                    new OA\Property(property: 'description', type: 'string', example: 'Comfortable modern sofa', nullable: true),
+                    new OA\Property(property: 'status', type: 'string', enum: ['draft', 'active', 'inactive', 'archived'], example: 'draft'),
+                    new OA\Property(property: 'price', type: 'number', format: 'float', example: 12900.0, minimum: 0),
+                    new OA\Property(property: 'cost', type: 'number', format: 'float', example: 8900.0, nullable: true, minimum: 0),
                     new OA\Property(property: 'category_id', type: 'integer', example: 1),
                     new OA\Property(property: 'brand_id', type: 'integer', example: 1, nullable: true),
-                    new OA\Property(property: 'description', type: 'string', example: 'Comfortable modern sofa', nullable: true),
-                    new OA\Property(property: 'tax_class', type: 'string', example: 'standard'),
-                    new OA\Property(property: 'status', type: 'string', enum: ['active', 'inactive'], example: 'active'),
-                ]
-            )
+                    new OA\Property(property: 'image_url', type: 'string', example: 'https://cdn.example.com/products/sofa.jpg', nullable: true),
+                    new OA\Property(property: 'on_hand', type: 'integer', example: 10, description: 'Current stock on hand'),
+                ],
+            ),
         ),
         responses: [
             new OA\Response(
@@ -165,9 +168,8 @@ class ProductController extends Controller
         $this->authorize('create', Product::class);
 
         $product = Product::create($request->validated());
-        $product->load(['category', 'brand']);
 
-        return response()->json($product, Response::HTTP_CREATED);
+        return response()->json($this->formatProduct($product), Response::HTTP_CREATED);
     }
 
     #[OA\Get(
@@ -199,9 +201,7 @@ class ProductController extends Controller
     {
         $this->authorize('view', $product);
 
-        $product->load(['category', 'brand']);
-
-        return response()->json($product);
+        return response()->json($this->formatProduct($product));
     }
 
     #[OA\Put(
@@ -223,14 +223,18 @@ class ProductController extends Controller
             required: true,
             content: new OA\JsonContent(
                 properties: [
-                    new OA\Property(property: 'type', type: 'string', enum: ['simple', 'configurable'], example: 'simple'),
                     new OA\Property(property: 'sku', type: 'string', example: 'SOFA-001'),
                     new OA\Property(property: 'name', type: 'string', example: 'Modern Sofa Deluxe'),
-                    new OA\Property(property: 'category_id', type: 'integer', example: 1),
                     new OA\Property(property: 'description', type: 'string', example: 'Updated description', nullable: true),
-                    new OA\Property(property: 'status', type: 'string', enum: ['active', 'inactive'], example: 'active'),
-                ]
-            )
+                    new OA\Property(property: 'status', type: 'string', enum: ['draft', 'active', 'inactive', 'archived'], example: 'active'),
+                    new OA\Property(property: 'price', type: 'number', format: 'float', example: 13900.0, minimum: 0),
+                    new OA\Property(property: 'cost', type: 'number', format: 'float', example: 9200.0, nullable: true, minimum: 0),
+                    new OA\Property(property: 'category_id', type: 'integer', example: 2),
+                    new OA\Property(property: 'brand_id', type: 'integer', example: 1, nullable: true),
+                    new OA\Property(property: 'image_url', type: 'string', example: 'https://cdn.example.com/products/sofa-updated.jpg', nullable: true),
+                    new OA\Property(property: 'on_hand', type: 'integer', example: 5, description: 'Current stock on hand'),
+                ],
+            ),
         ),
         responses: [
             new OA\Response(
@@ -248,9 +252,8 @@ class ProductController extends Controller
         $this->authorize('update', $product);
 
         $product->update($request->validated());
-        $product->load(['category', 'brand']);
 
-        return response()->json($product);
+        return response()->json($this->formatProduct($product));
     }
 
     #[OA\Delete(
@@ -313,6 +316,7 @@ class ProductController extends Controller
                 'category_name',
                 'brand_name',
                 'price',
+                'on_hand',
                 'status',
                 'actions',
             ],
@@ -329,15 +333,6 @@ class ProductController extends Controller
                 [
                     'key' => 'name',
                     'label' => 'catalog.products.fields.name',
-                    'component' => 'q-input',
-                    'rules' => ['required'],
-                    'props' => [
-                        'type' => 'text',
-                    ],
-                ],
-                [
-                    'key' => 'slug',
-                    'label' => 'catalog.products.fields.slug',
                     'component' => 'q-input',
                     'rules' => ['required'],
                     'props' => [
@@ -371,6 +366,17 @@ class ProductController extends Controller
                         'type' => 'number',
                         'min' => 0,
                         'step' => '0.01',
+                    ],
+                ],
+                [
+                    'key' => 'on_hand',
+                    'label' => 'catalog.products.fields.on_hand',
+                    'component' => 'q-input',
+                    'rules' => ['required', 'integer'],
+                    'props' => [
+                        'type' => 'number',
+                        'min' => 0,
+                        'step' => 1,
                     ],
                 ],
                 [
@@ -415,15 +421,6 @@ class ProductController extends Controller
                         'type' => 'text',
                     ],
                 ],
-                [
-                    'key' => 'meta',
-                    'label' => 'catalog.products.fields.meta',
-                    'component' => 'q-input',
-                    'rules' => [],
-                    'props' => [
-                        'type' => 'textarea',
-                    ],
-                ],
             ],
             'show_fields' => [
                 'sku',
@@ -437,5 +434,36 @@ class ProductController extends Controller
         ];
 
         return response()->json((new ProductMetaResource($meta))->toArray(request()));
+    }
+
+    /**
+     * Format product payload to allowed fields.
+     *
+     * @return array<string, mixed>
+     */
+    private function formatProduct(Product $product): array
+    {
+        $product->loadMissing(['category', 'brand']);
+
+        return Arr::only(
+            $product->toArray(),
+            [
+                'id',
+                'sku',
+                'name',
+                'description',
+                'status',
+                'price',
+                'cost',
+                'category_id',
+                'brand_id',
+                'on_hand',
+                'image_url',
+                'created_at',
+                'updated_at',
+                'brand',
+                'category',
+            ],
+        );
     }
 }

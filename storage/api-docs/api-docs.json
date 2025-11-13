@@ -1651,21 +1651,14 @@
                         "application/json": {
                             "schema": {
                                 "required": [
-                                    "type",
                                     "sku",
                                     "name",
                                     "category_id",
-                                    "status"
+                                    "status",
+                                    "price",
+                                    "on_hand"
                                 ],
                                 "properties": {
-                                    "type": {
-                                        "type": "string",
-                                        "enum": [
-                                            "simple",
-                                            "configurable"
-                                        ],
-                                        "example": "simple"
-                                    },
                                     "sku": {
                                         "type": "string",
                                         "example": "SOFA-001"
@@ -1673,6 +1666,34 @@
                                     "name": {
                                         "type": "string",
                                         "example": "Modern Sofa"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Comfortable modern sofa",
+                                        "nullable": true
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "draft",
+                                            "active",
+                                            "inactive",
+                                            "archived"
+                                        ],
+                                        "example": "draft"
+                                    },
+                                    "price": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "minimum": 0,
+                                        "example": 12900
+                                    },
+                                    "cost": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "minimum": 0,
+                                        "example": 8900,
+                                        "nullable": true
                                     },
                                     "category_id": {
                                         "type": "integer",
@@ -1683,22 +1704,15 @@
                                         "example": 1,
                                         "nullable": true
                                     },
-                                    "description": {
+                                    "image_url": {
                                         "type": "string",
-                                        "example": "Comfortable modern sofa",
+                                        "example": "https://cdn.example.com/products/sofa.jpg",
                                         "nullable": true
                                     },
-                                    "tax_class": {
-                                        "type": "string",
-                                        "example": "standard"
-                                    },
-                                    "status": {
-                                        "type": "string",
-                                        "enum": [
-                                            "active",
-                                            "inactive"
-                                        ],
-                                        "example": "active"
+                                    "on_hand": {
+                                        "description": "Current stock on hand",
+                                        "type": "integer",
+                                        "example": 10
                                     }
                                 },
                                 "type": "object"
@@ -1826,14 +1840,6 @@
                         "application/json": {
                             "schema": {
                                 "properties": {
-                                    "type": {
-                                        "type": "string",
-                                        "enum": [
-                                            "simple",
-                                            "configurable"
-                                        ],
-                                        "example": "simple"
-                                    },
                                     "sku": {
                                         "type": "string",
                                         "example": "SOFA-001"
@@ -1841,10 +1847,6 @@
                                     "name": {
                                         "type": "string",
                                         "example": "Modern Sofa Deluxe"
-                                    },
-                                    "category_id": {
-                                        "type": "integer",
-                                        "example": 1
                                     },
                                     "description": {
                                         "type": "string",
@@ -1854,10 +1856,44 @@
                                     "status": {
                                         "type": "string",
                                         "enum": [
+                                            "draft",
                                             "active",
-                                            "inactive"
+                                            "inactive",
+                                            "archived"
                                         ],
                                         "example": "active"
+                                    },
+                                    "price": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "minimum": 0,
+                                        "example": 13900
+                                    },
+                                    "cost": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "minimum": 0,
+                                        "example": 9200,
+                                        "nullable": true
+                                    },
+                                    "category_id": {
+                                        "type": "integer",
+                                        "example": 2
+                                    },
+                                    "brand_id": {
+                                        "type": "integer",
+                                        "example": 1,
+                                        "nullable": true
+                                    },
+                                    "image_url": {
+                                        "type": "string",
+                                        "example": "https://cdn.example.com/products/sofa-updated.jpg",
+                                        "nullable": true
+                                    },
+                                    "on_hand": {
+                                        "description": "Current stock on hand",
+                                        "type": "integer",
+                                        "example": 5
                                     }
                                 },
                                 "type": "object"
@@ -2533,7 +2569,8 @@
                     "sku",
                     "name",
                     "type",
-                    "status"
+                    "status",
+                    "on_hand"
                 ],
                 "properties": {
                     "id": {
@@ -2584,6 +2621,11 @@
                             "inactive"
                         ],
                         "example": "active"
+                    },
+                    "on_hand": {
+                        "description": "Current stock on hand",
+                        "type": "integer",
+                        "example": 10
                     },
                     "created_at": {
                         "type": "string",
@@ -3446,6 +3488,11 @@
             }
         }
     },
+    "security": [
+        {
+            "bearerAuth": []
+        }
+    ],
     "tags": [
         {
             "name": "Auth",

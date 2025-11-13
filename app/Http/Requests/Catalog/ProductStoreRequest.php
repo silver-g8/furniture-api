@@ -29,8 +29,12 @@ class ProductStoreRequest extends FormRequest
             'brand_id' => ['nullable', 'exists:brands,id'],
             'name' => ['required', 'string', 'max:255'],
             'sku' => ['required', 'string', 'max:255', 'unique:products,sku'],
+            'description' => ['nullable', 'string'],
             'price' => ['required', 'numeric', 'min:0'],
+            'cost' => ['nullable', 'numeric', 'min:0'],
             'status' => ['required', Rule::in(['draft', 'active', 'inactive', 'archived'])],
+            'image_url' => ['nullable', 'string'],
+            'on_hand' => ['required', 'integer', 'min:0'],
         ];
     }
 }

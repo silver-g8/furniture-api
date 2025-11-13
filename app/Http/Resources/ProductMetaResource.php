@@ -6,6 +6,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Arr;
 
 /**
  * @phpstan-type ProductMeta array{
@@ -35,13 +36,17 @@ class ProductMetaResource extends JsonResource
         return [
             'index_fields' => $meta['index_fields'],
             'form_fields' => array_map(
-                static fn (array $field): array => [
-                    'key' => $field['key'],
-                    'label' => $field['label'],
-                    'component' => $field['component'],
-                    'rules' => $field['rules'],
-                    'props' => $field['props'] ?? new \stdClass,
-                ],
+                static function (array $field): array {
+                    $normalized = Arr::only($field, ['key', 'label', 'component', 'rules', 'props']);
+
+                    return [
+                        'key' => $normalized['key'] ?? '',
+                        'label' => $normalized['label'] ?? '',
+                        'component' => $normalized['component'] ?? '',
+                        'rules' => array_values($normalized['rules'] ?? []),
+                        'props' => $normalized['props'] ?? new \stdClass,
+                    ];
+                },
                 $meta['form_fields'],
             ),
             'show_fields' => $meta['show_fields'],
