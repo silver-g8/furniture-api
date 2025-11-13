@@ -25,7 +25,9 @@ class ProductFactory extends Factory
             'brand_id' => Brand::factory(),
             'name' => fake()->words(3, true),
             'sku' => fake()->unique()->bothify('SKU-####-????'),
+            'description' => fake()->paragraph(),
             'price' => fake()->randomFloat(2, 10, 10000),
+            'cost' => fake()->randomFloat(2, 5, 8000),
             'status' => fake()->randomElement(['draft', 'active', 'inactive', 'archived']),
             'on_hand' => fake()->numberBetween(0, 100),
         ];
