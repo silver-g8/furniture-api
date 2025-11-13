@@ -24,17 +24,20 @@ test('can assign a brand when creating a product', function (): void {
         'sku' => 'BRAND-001',
         'price' => 4990,
         'status' => 'active',
+        'on_hand' => 12,
     ];
 
     $response = $this->actingAs($this->user)
         ->postJson('/api/v1/products', $payload);
 
     $response->assertStatus(201)
-        ->assertJsonPath('brand_id', $this->brand->id);
+        ->assertJsonPath('brand_id', $this->brand->id)
+        ->assertJsonPath('on_hand', 12);
 
     $this->assertDatabaseHas('products', [
         'sku' => 'BRAND-001',
         'brand_id' => $this->brand->id,
+        'on_hand' => 12,
     ]);
 });
 
@@ -68,6 +71,7 @@ test('validates brand exists when assigning', function (): void {
         'sku' => 'BRAND-999',
         'price' => 2500,
         'status' => 'active',
+        'on_hand' => 8,
     ];
 
     $response = $this->actingAs($this->user)

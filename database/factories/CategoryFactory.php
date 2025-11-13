@@ -19,7 +19,9 @@ class CategoryFactory extends Factory
      */
     public function definition(): array
     {
-        $name = fake()->unique()->words(2, true);
+        $base = fake()->words(2, true);
+        $suffix = fake()->unique()->numerify('###');
+        $name = Str::title($base.' '.$suffix);
 
         return [
             'name' => ucfirst($name),

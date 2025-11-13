@@ -23,8 +23,12 @@ class Product extends Model
         'brand_id',
         'name',
         'sku',
+        'description',
         'price',
+        'cost',
         'status',
+        'image_url',
+        'on_hand',
     ];
 
     /**
@@ -34,6 +38,8 @@ class Product extends Model
      */
     protected $casts = [
         'price' => 'decimal:2',
+        'cost' => 'decimal:2',
+        'on_hand' => 'int',
     ];
 
     /**

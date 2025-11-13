@@ -23,7 +23,7 @@ test('can list products', function () {
     $response->assertStatus(200)
         ->assertJsonStructure([
             'data' => [
-                '*' => ['id', 'category_id', 'name', 'sku', 'price', 'status', 'created_at', 'updated_at'],
+                '*' => ['id', 'category_id', 'name', 'sku', 'price', 'status', 'on_hand', 'created_at', 'updated_at'],
             ],
         ]);
 });
@@ -40,6 +40,7 @@ test('can show a product', function () {
             'name' => $product->name,
             'sku' => $product->sku,
             'price' => (string) $product->price,
+            'on_hand' => $product->on_hand,
         ]);
 });
 
@@ -50,6 +51,7 @@ test('can create a product', function () {
         'sku' => 'TEST-001',
         'price' => 999.99,
         'status' => 'active',
+        'on_hand' => 10,
     ];
 
     $response = $this->actingAs($this->user)
@@ -61,11 +63,13 @@ test('can create a product', function () {
             'sku' => 'TEST-001',
             'price' => '999.99',
             'status' => 'active',
+            'on_hand' => 10,
         ]);
 
     $this->assertDatabaseHas('products', [
         'name' => 'Test Product',
         'sku' => 'TEST-001',
+        'on_hand' => 10,
     ]);
 });
 
@@ -75,6 +79,7 @@ test('can update a product', function () {
     $data = [
         'name' => 'Updated Product',
         'price' => 1999.99,
+        'on_hand' => 25,
     ];
 
     $response = $this->actingAs($this->user)
@@ -84,11 +89,13 @@ test('can update a product', function () {
         ->assertJson([
             'name' => 'Updated Product',
             'price' => '1999.99',
+            'on_hand' => 25,
         ]);
 
     $this->assertDatabaseHas('products', [
         'id' => $product->id,
         'name' => 'Updated Product',
+        'on_hand' => 25,
     ]);
 });
 
@@ -117,6 +124,7 @@ test('cannot create product with duplicate sku', function () {
         'sku' => 'DUPLICATE-SKU',
         'price' => 999.99,
         'status' => 'active',
+        'on_hand' => 5,
     ];
 
     $response = $this->actingAs($this->user)
@@ -133,6 +141,7 @@ test('validates price is not negative', function () {
         'sku' => 'TEST-001',
         'price' => -100,
         'status' => 'active',
+        'on_hand' => 5,
     ];
 
     $response = $this->actingAs($this->user)
@@ -149,6 +158,7 @@ test('validates status is valid enum value', function () {
         'sku' => 'TEST-001',
         'price' => 999.99,
         'status' => 'invalid-status',
+        'on_hand' => 5,
     ];
 
     $response = $this->actingAs($this->user)
@@ -165,6 +175,7 @@ test('validates category_id exists', function () {
         'sku' => 'TEST-001',
         'price' => 999.99,
         'status' => 'active',
+        'on_hand' => 5,
     ];
 
     $response = $this->actingAs($this->user)
@@ -187,6 +198,7 @@ test('can create product with draft status', function () {
         'sku' => 'DRAFT-001',
         'price' => 999.99,
         'status' => 'draft',
+        'on_hand' => 0,
     ];
 
     $response = $this->actingAs($this->user)
@@ -195,6 +207,7 @@ test('can create product with draft status', function () {
     $response->assertStatus(201)
         ->assertJson([
             'status' => 'draft',
+            'on_hand' => 0,
         ]);
 });
 
@@ -205,6 +218,7 @@ test('can create product with archived status', function () {
         'sku' => 'ARCH-001',
         'price' => 999.99,
         'status' => 'archived',
+        'on_hand' => 3,
     ];
 
     $response = $this->actingAs($this->user)
@@ -213,6 +227,7 @@ test('can create product with archived status', function () {
     $response->assertStatus(201)
         ->assertJson([
             'status' => 'archived',
+            'on_hand' => 3,
         ]);
 });
 
@@ -235,5 +250,30 @@ test('validates required fields on create', function () {
         ->postJson('/api/v1/products', []);
 
     $response->assertStatus(422)
-        ->assertJsonValidationErrors(['category_id', 'name', 'sku', 'price', 'status']);
+        ->assertJsonValidationErrors(['category_id', 'name', 'sku', 'price', 'status', 'on_hand']);
+});
+
+test('can patch on_hand without affecting other fields', function () {
+    $product = Product::factory()->create([
+        'category_id' => $this->category->id,
+        'on_hand' => 7,
+    ]);
+
+    $response = $this->actingAs($this->user)
+        ->patchJson("/api/v1/products/{$product->id}", [
+            'on_hand' => 42,
+        ]);
+
+    $response->assertStatus(200)
+        ->assertJson([
+            'id' => $product->id,
+            'on_hand' => 42,
+            'name' => $product->name,
+        ]);
+
+    $this->assertDatabaseHas('products', [
+        'id' => $product->id,
+        'on_hand' => 42,
+        'name' => $product->name,
+    ]);
 });
