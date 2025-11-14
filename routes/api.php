@@ -46,6 +46,8 @@ Route::prefix('v1')->group(function () {
         Route::get('categories/options', CategoriesOptionsController::class)->name('categories.options');
         Route::apiResource('categories', CategoryController::class);
         Route::apiResource('products', ProductController::class);
+        Route::post('products/{product}/image', [ProductController::class, 'uploadImage'])->name('products.image.upload');
+        Route::delete('products/{product}/image', [ProductController::class, 'deleteImage'])->name('products.image.delete');
         Route::get('dashboard', DashboardController::class)->name('dashboard.show');
 
         // Inventory routes

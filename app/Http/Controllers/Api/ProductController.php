@@ -14,6 +14,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use OpenApi\Attributes as OA;
@@ -434,6 +435,138 @@ class ProductController extends Controller
         ];
 
         return response()->json((new ProductMetaResource($meta))->toArray(request()));
+    }
+
+    #[OA\Post(
+        path: '/api/v1/products/{id}/image',
+        summary: 'Upload product image',
+        description: 'Upload an image file for a product and store it in public storage',
+        security: [['bearerAuth' => []]],
+        tags: ['Catalog'],
+        parameters: [
+            new OA\Parameter(
+                name: 'id',
+                in: 'path',
+                description: 'Product ID',
+                required: true,
+                schema: new OA\Schema(type: 'integer')
+            ),
+        ],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: 'multipart/form-data',
+                schema: new OA\Schema(
+                    required: ['image'],
+                    properties: [
+                        new OA\Property(
+                            property: 'image',
+                            type: 'string',
+                            format: 'binary',
+                            description: 'Image file (jpg, jpeg, png, webp, max 2MB)'
+                        ),
+                    ]
+                )
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Image uploaded successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'image_url', type: 'string', example: '/storage/products/1/abc123.jpg'),
+                    ]
+                )
+            ),
+            new OA\Response(response: 401, description: 'Unauthenticated', content: new OA\JsonContent(ref: '#/components/schemas/Error')),
+            new OA\Response(response: 403, description: 'Unauthorized', content: new OA\JsonContent(ref: '#/components/schemas/Error')),
+            new OA\Response(response: 404, description: 'Product not found', content: new OA\JsonContent(ref: '#/components/schemas/Error')),
+            new OA\Response(response: 422, description: 'Validation error', content: new OA\JsonContent(ref: '#/components/schemas/ValidationError')),
+        ]
+    )]
+    public function uploadImage(Request $request, Product $product): JsonResponse
+    {
+        $this->authorize('update', $product);
+
+        $validated = $request->validate([
+            'image' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+        ]);
+
+        $file = $validated['image'];
+        $directory = "products/{$product->id}";
+        $filename = $file->hashName();
+
+        // Delete old file if exists
+        if ($product->image_url) {
+            $parsedUrl = parse_url($product->image_url, PHP_URL_PATH);
+            if (is_string($parsedUrl)) {
+                $oldPath = str_replace('/storage/', '', $parsedUrl);
+                if ($oldPath && Storage::disk('public')->exists($oldPath)) {
+                    Storage::disk('public')->delete($oldPath);
+                }
+            }
+        }
+
+        // Ensure directory exists
+        Storage::disk('public')->makeDirectory($directory);
+
+        // Store new file
+        $path = Storage::disk('public')->putFileAs($directory, $file, $filename);
+
+        // Generate public URL (putFileAs returns string on success)
+        $imageUrl = is_string($path) ? Storage::disk('public')->url($path) : '';
+
+        // Update product
+        $product->update(['image_url' => $imageUrl]);
+
+        return response()->json([
+            'image_url' => $imageUrl,
+        ]);
+    }
+
+    #[OA\Delete(
+        path: '/api/v1/products/{id}/image',
+        summary: 'Delete product image',
+        description: 'Delete the image file for a product and clear the image_url field',
+        security: [['bearerAuth' => []]],
+        tags: ['Catalog'],
+        parameters: [
+            new OA\Parameter(
+                name: 'id',
+                in: 'path',
+                description: 'Product ID',
+                required: true,
+                schema: new OA\Schema(type: 'integer')
+            ),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Image deleted successfully'),
+            new OA\Response(response: 204, description: 'Image deleted (no content)'),
+            new OA\Response(response: 401, description: 'Unauthenticated', content: new OA\JsonContent(ref: '#/components/schemas/Error')),
+            new OA\Response(response: 403, description: 'Unauthorized', content: new OA\JsonContent(ref: '#/components/schemas/Error')),
+            new OA\Response(response: 404, description: 'Product not found', content: new OA\JsonContent(ref: '#/components/schemas/Error')),
+        ]
+    )]
+    public function deleteImage(Product $product): Response
+    {
+        $this->authorize('update', $product);
+
+        // Delete physical file if exists
+        if ($product->image_url) {
+            $parsedUrl = parse_url($product->image_url, PHP_URL_PATH);
+            if (is_string($parsedUrl)) {
+                $path = str_replace('/storage/', '', $parsedUrl);
+                if ($path && Storage::disk('public')->exists($path)) {
+                    Storage::disk('public')->delete($path);
+                }
+            }
+        }
+
+        // Clear image_url field
+        $product->update(['image_url' => null]);
+
+        return response()->noContent();
     }
 
     /**
