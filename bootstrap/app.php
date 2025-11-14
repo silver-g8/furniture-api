@@ -25,6 +25,12 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->appendToGroup('api', EnsureFrontendRequestsAreStateful::class);
 
         /**
+         * เพิ่ม CSRF protection สำหรับ stateful requests
+         * Laravel Sanctum ต้องการ CSRF token สำหรับ stateful authentication
+         */
+        $middleware->appendToGroup('api', \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class);
+
+        /**
          * (แนะนำ) ให้แน่ใจว่า api group มี SubstituteBindings
          * เพื่อให้ Route Model Binding / implicit bindings ทำงานครบ
          * ถ้ามีอยู่แล้วจะไม่มีผลซ้ำซ้อน
