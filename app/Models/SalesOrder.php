@@ -57,4 +57,14 @@ class SalesOrder extends Model
     {
         return $this->hasMany(InstallationOrder::class, 'sales_order_id');
     }
+
+    /**
+     * Get the items for this sales order.
+     *
+     * @return HasMany<SalesOrderItem, $this>
+     */
+    public function items(): HasMany
+    {
+        return $this->hasMany(SalesOrderItem::class);
+    }
 }

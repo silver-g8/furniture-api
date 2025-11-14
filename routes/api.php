@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BrandController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\CustomerController;
+use App\Http\Controllers\Api\CustomerPurchaseController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\GoodsReceiptController;
 use App\Http\Controllers\Api\InstallationOrderController;
@@ -59,6 +60,7 @@ Route::prefix('v1')->group(function () {
 
         // Sales routes
         Route::apiResource('customers', CustomerController::class);
+        Route::get('customers/{customer}/purchases', [CustomerPurchaseController::class, 'index'])->name('customers.purchases');
         Route::apiResource('orders', OrderController::class);
         Route::post('orders/{order}/confirm', [OrderController::class, 'confirm']);
         Route::post('orders/{order}/deliver', [OrderController::class, 'deliver']);

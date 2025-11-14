@@ -7,6 +7,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 /**
  * Customer model
@@ -89,5 +90,22 @@ class Customer extends Model
     public function feedback(): HasMany
     {
         return $this->hasMany(CustomerFeedback::class);
+    }
+
+    /**
+     * Get the purchased items for this customer through sales orders.
+     *
+     * @return HasManyThrough<SalesOrderItem, SalesOrder, $this>
+     */
+    public function purchasedItems(): HasManyThrough
+    {
+        return $this->hasManyThrough(
+            SalesOrderItem::class,
+            SalesOrder::class,
+            'customer_id',     // SalesOrder.customer_id
+            'sales_order_id',  // SalesOrderItem.sales_order_id
+            'id',              // Customer.id
+            'id'               // SalesOrder.id
+        );
     }
 }
