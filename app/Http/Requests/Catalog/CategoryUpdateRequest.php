@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Catalog;
 
+use App\Models\Category;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -37,12 +38,19 @@ class CategoryUpdateRequest extends FormRequest
      */
     public function rules(): array
     {
-        $categoryId = $this->route('category');
+        /** @var Category|null $category */
+        $category = $this->route('category');
+        $categoryId = $category?->id;
 
         return [
-            'name' => ['sometimes', 'string', 'max:255', Rule::unique('categories', 'name')->ignore($categoryId)],
-            'slug' => ['sometimes', 'string', 'max:255', Rule::unique('categories', 'slug')->ignore($categoryId)],
-            'parent_id' => ['nullable', 'exists:categories,id'],
+            'name' => ['sometimes', 'string', 'max:255', Rule::unique('categories', 'name')->ignore($category)],
+            'slug' => ['sometimes', 'string', 'max:255', Rule::unique('categories', 'slug')->ignore($category)],
+            'parent_id' => [
+                'nullable',
+                'integer',
+                'exists:categories,id',
+                Rule::notIn($categoryId !== null ? [$categoryId] : []),
+            ],
             'is_active' => ['boolean'],
         ];
     }

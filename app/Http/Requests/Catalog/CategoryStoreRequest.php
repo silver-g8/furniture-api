@@ -38,7 +38,7 @@ class CategoryStoreRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255', 'unique:categories,name'],
-            'slug' => ['required', 'string', 'max:255', 'unique:categories,slug'],
+            'slug' => ['sometimes', 'string', 'max:255', 'unique:categories,slug'],
             'parent_id' => ['nullable', 'exists:categories,id'],
             'is_active' => ['boolean'],
         ];
