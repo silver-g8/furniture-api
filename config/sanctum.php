@@ -14,16 +14,8 @@ return [
     */
 
     'stateful' => explode(',', env('SANCTUM_STATEFUL_DOMAINS', implode(',', [
-        'localhost',
-        'localhost:3000',
-        'localhost:8000',
         'localhost:9000',
-        '127.0.0.1',
-        '127.0.0.1:8000',
         '127.0.0.1:9000',
-        '::1',
-        'furniture-api.test',
-        'furniture-api.test:80',
     ]))),
 
     /*

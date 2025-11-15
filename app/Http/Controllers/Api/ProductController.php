@@ -94,7 +94,8 @@ class ProductController extends Controller
             'order' => ['nullable', Rule::in(['asc', 'desc'])],
         ])->validate();
 
-        $query = Product::with(['category', 'brand']);
+        $query = Product::with(['category', 'brand'])
+            ->withSum('stocks', 'quantity');
 
         $search = isset($validated['search']) ? trim((string) $validated['search']) : null;
         if ($search !== null && $search !== '') {
@@ -126,6 +127,12 @@ class ProductController extends Controller
         }
 
         $products = $query->paginate($perPage)->appends($validated);
+
+        // Calculate on_hand from stocks for each product (using withSum to avoid N+1)
+        $products->getCollection()->transform(function ($product) {
+            $product->on_hand = (int) ($product->stocks_sum_quantity ?? 0);
+            return $product;
+        });
 
         return response()->json($products);
     }
@@ -370,6 +377,61 @@ class ProductController extends Controller
                     ],
                 ],
                 [
+                    'key' => 'price_tagged',
+                    'label' => 'catalog.products.fields.priceTagged',
+                    'component' => 'q-input',
+                    'rules' => ['numeric'],
+                    'props' => [
+                        'type' => 'number',
+                        'min' => 0,
+                        'step' => '0.01',
+                    ],
+                ],
+                [
+                    'key' => 'price_discounted_tag',
+                    'label' => 'catalog.products.fields.priceDiscountedTag',
+                    'component' => 'q-input',
+                    'rules' => ['numeric'],
+                    'props' => [
+                        'type' => 'number',
+                        'min' => 0,
+                        'step' => '0.01',
+                    ],
+                ],
+                [
+                    'key' => 'price_discounted_net',
+                    'label' => 'catalog.products.fields.priceDiscountedNet',
+                    'component' => 'q-input',
+                    'rules' => ['numeric'],
+                    'props' => [
+                        'type' => 'number',
+                        'min' => 0,
+                        'step' => '0.01',
+                    ],
+                ],
+                [
+                    'key' => 'price_vat',
+                    'label' => 'catalog.products.fields.priceVat',
+                    'component' => 'q-input',
+                    'rules' => ['numeric'],
+                    'props' => [
+                        'type' => 'number',
+                        'min' => 0,
+                        'step' => '0.01',
+                    ],
+                ],
+                [
+                    'key' => 'price_vat_credit',
+                    'label' => 'catalog.products.fields.priceVatCredit',
+                    'component' => 'q-input',
+                    'rules' => ['numeric'],
+                    'props' => [
+                        'type' => 'number',
+                        'min' => 0,
+                        'step' => '0.01',
+                    ],
+                ],
+                [
                     'key' => 'on_hand',
                     'label' => 'catalog.products.fields.on_hand',
                     'component' => 'q-input',
@@ -569,6 +631,85 @@ class ProductController extends Controller
         return response()->noContent();
     }
 
+    #[OA\Get(
+        path: '/api/v1/products/{id}/stock-summary',
+        summary: 'Get product stock summary',
+        description: 'Get stock summary for a product across all warehouses',
+        security: [['bearerAuth' => []]],
+        tags: ['Catalog'],
+        parameters: [
+            new OA\Parameter(
+                name: 'id',
+                in: 'path',
+                description: 'Product ID',
+                required: true,
+                schema: new OA\Schema(type: 'integer')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Product stock summary',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                        new OA\Property(property: 'message', type: 'string'),
+                    ]
+                )
+            ),
+            new OA\Response(response: 401, description: 'Unauthenticated', content: new OA\JsonContent(ref: '#/components/schemas/Error')),
+            new OA\Response(response: 404, description: 'Product not found', content: new OA\JsonContent(ref: '#/components/schemas/Error')),
+        ]
+    )]
+    public function stockSummary(Product $product): JsonResponse
+    {
+        $this->authorize('view', $product);
+
+        // Load stocks with warehouse information
+        $stocks = $product->stocks()->with('warehouse')->get();
+
+        // Calculate total on hand
+        $totalOnHand = $stocks->sum('quantity');
+
+        // Group by warehouse
+        $warehouseStocks = $stocks->map(function ($stock) {
+            return [
+                'stock_id' => $stock->id,
+                'warehouse_id' => $stock->warehouse_id,
+                'warehouse' => [
+                    'id' => $stock->warehouse->id,
+                    'code' => $stock->warehouse->code,
+                    'name' => $stock->warehouse->name,
+                    'is_active' => $stock->warehouse->is_active,
+                ],
+                'quantity' => $stock->quantity,
+                'updated_at' => $stock->updated_at,
+            ];
+        });
+
+        // Calculate summary statistics
+        $warehousesWithStock = $stocks->where('quantity', '>', 0)->count();
+        $warehousesZeroStock = $stocks->where('quantity', 0)->count();
+        $totalWarehouses = $stocks->count();
+
+        return response()->json([
+            'data' => [
+                'product' => [
+                    'id' => $product->id,
+                    'sku' => $product->sku,
+                    'name' => $product->name,
+                ],
+                'total_on_hand' => $totalOnHand,
+                'warehouses' => $warehouseStocks,
+                'summary' => [
+                    'total_warehouses' => $totalWarehouses,
+                    'warehouses_with_stock' => $warehousesWithStock,
+                    'warehouses_zero_stock' => $warehousesZeroStock,
+                ],
+            ],
+        ]);
+    }
+
     /**
      * Format product payload to allowed fields.
      *
@@ -578,7 +719,7 @@ class ProductController extends Controller
     {
         $product->loadMissing(['category', 'brand']);
 
-        return Arr::only(
+        $productArray = Arr::only(
             $product->toArray(),
             [
                 'id',
@@ -587,6 +728,11 @@ class ProductController extends Controller
                 'description',
                 'status',
                 'price',
+                'price_tagged',
+                'price_discounted_tag',
+                'price_discounted_net',
+                'price_vat',
+                'price_vat_credit',
                 'cost',
                 'category_id',
                 'brand_id',
@@ -598,5 +744,14 @@ class ProductController extends Controller
                 'category',
             ],
         );
+
+        // Calculate on_hand from stocks (sum of all warehouse quantities)
+        // Use withSum if not already loaded to avoid N+1 query
+        if (!isset($product->stocks_sum_quantity)) {
+            $product->loadSum('stocks', 'quantity');
+        }
+        $productArray['on_hand'] = (int) ($product->stocks_sum_quantity ?? 0);
+
+        return $productArray;
     }
 }
