@@ -14,6 +14,14 @@ abstract class TestCase extends BaseTestCase
     use InteractsWithTime;
     use MakesHttpRequests;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Disable CSRF protection for API tests
+        $this->withoutMiddleware(\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class);
+    }
+
     public function actingAs($user, $guard = null): static
     {
         parent::actingAs($user, $guard);

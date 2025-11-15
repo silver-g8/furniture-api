@@ -111,8 +111,8 @@ class OrderService
             throw new \Exception("Insufficient stock for product ID {$item->product_id}. Available: {$stock->quantity}, Required: {$item->qty}");
         }
 
-        $stock->quantity -= $item->qty;
-        $stock->save();
+        // Update stock quantity using decrement method for consistency
+        $stock->decrement('quantity', $item->qty);
 
         // Create stock movement record
         $stock->movements()->create([
@@ -120,6 +120,7 @@ class OrderService
             'quantity' => $item->qty,
             'reference_type' => 'order',
             'reference_id' => $item->order_id,
+            'user_id' => auth()->id(),
         ]);
     }
 

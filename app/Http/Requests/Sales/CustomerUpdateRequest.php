@@ -34,6 +34,12 @@ class CustomerUpdateRequest extends FormRequest
             'address' => ['nullable', 'string'],
             'is_active' => ['boolean'],
             'notes' => ['nullable', 'string'],
+            'payment_type' => ['sometimes', 'string', 'in:cash,credit'],
+            'customer_group' => ['sometimes', 'string', 'in:personal,government,organization'],
+            'credit_limit' => ['nullable', 'numeric', 'min:0', 'required_if:payment_type,credit'],
+            'credit_term_days' => ['nullable', 'integer', 'min:1', 'required_if:payment_type,credit'],
+            'outstanding_balance' => ['nullable', 'numeric', 'min:0'],
+            'credit_note' => ['nullable', 'string'],
         ];
     }
 }

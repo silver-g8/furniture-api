@@ -27,8 +27,11 @@ return Application::configure(basePath: dirname(__DIR__))
         /**
          * เพิ่ม CSRF protection สำหรับ stateful requests
          * Laravel Sanctum ต้องการ CSRF token สำหรับ stateful authentication
+         *
+         * NOTE: CSRF จะถูก check อัตโนมัติโดย EnsureFrontendRequestsAreStateful
+         * สำหรับ stateful domains เท่านั้น ไม่จำเป็นต้อง append ที่นี่
          */
-        $middleware->appendToGroup('api', \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class);
+        // $middleware->appendToGroup('api', \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class);
 
         /**
          * (แนะนำ) ให้แน่ใจว่า api group มี SubstituteBindings

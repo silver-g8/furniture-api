@@ -53,6 +53,7 @@ test('can create a customer', function () {
         'phone' => '0812345678',
         'address' => '123 Test St',
         'is_active' => true,
+        'payment_type' => 'cash',
     ];
 
     $response = $this->actingAs($this->user)
@@ -106,6 +107,7 @@ test('cannot create customer with duplicate code', function () {
         'name' => 'Test Customer',
         'email' => 'test@example.com',
         'phone' => '0812345678',
+        'payment_type' => 'cash',
     ];
 
     $response = $this->actingAs($this->user)
@@ -123,6 +125,7 @@ test('cannot create customer with duplicate email', function () {
         'name' => 'Test Customer',
         'email' => 'test@example.com',
         'phone' => '0812345678',
+        'payment_type' => 'cash',
     ];
 
     $response = $this->actingAs($this->user)
@@ -143,7 +146,7 @@ test('validates required fields on create', function () {
         ->postJson('/api/v1/customers', []);
 
     $response->assertUnprocessable()
-        ->assertJsonValidationErrors(['code', 'name', 'email', 'phone']);
+        ->assertJsonValidationErrors(['code', 'name', 'email', 'phone', 'payment_type']);
 });
 
 test('customer includes orders relationship', function () {
@@ -159,5 +162,72 @@ test('customer includes orders relationship', function () {
             'name',
             'email',
             'orders',
+        ]);
+});
+
+test('can create credit customer with credit fields', function () {
+    $data = [
+        'code' => 'CUST-CREDIT-001',
+        'name' => 'Credit Customer',
+        'email' => 'credit@example.com',
+        'phone' => '0812345679',
+        'payment_type' => 'credit',
+        'credit_limit' => 50000.00,
+        'credit_term_days' => 30,
+        'credit_note' => 'Test credit customer',
+    ];
+
+    $response = $this->actingAs($this->user)
+        ->postJson('/api/v1/customers', $data);
+
+    $response->assertCreated()
+        ->assertJson($data);
+
+    $this->assertDatabaseHas('customers', $data);
+});
+
+test('credit customer requires credit_limit and credit_term_days', function () {
+    $data = [
+        'code' => 'CUST-CREDIT-002',
+        'name' => 'Credit Customer',
+        'email' => 'credit2@example.com',
+        'phone' => '0812345680',
+        'payment_type' => 'credit',
+    ];
+
+    $response = $this->actingAs($this->user)
+        ->postJson('/api/v1/customers', $data);
+
+    $response->assertUnprocessable()
+        ->assertJsonValidationErrors(['credit_limit', 'credit_term_days']);
+});
+
+test('customer response includes payment and credit fields', function () {
+    $customer = Customer::factory()->create([
+        'payment_type' => 'credit',
+        'credit_limit' => 50000.00,
+        'credit_term_days' => 30,
+        'outstanding_balance' => 10000.00,
+    ]);
+
+    $response = $this->actingAs($this->user)
+        ->getJson("/api/v1/customers/{$customer->id}");
+
+    $response->assertOk()
+        ->assertJsonStructure([
+            'id',
+            'code',
+            'name',
+            'payment_type',
+            'credit_limit',
+            'credit_term_days',
+            'outstanding_balance',
+            'is_credit',
+            'is_over_credit_limit',
+        ])
+        ->assertJson([
+            'payment_type' => 'credit',
+            'is_credit' => true,
+            'is_over_credit_limit' => false,
         ]);
 });

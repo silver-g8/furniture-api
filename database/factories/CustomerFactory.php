@@ -34,6 +34,11 @@ class CustomerFactory extends Factory
             'address' => fake()->address(),
             'is_active' => true,
             'notes' => fake()->optional()->sentence(),
+            'payment_type' => 'cash',
+            'credit_limit' => null,
+            'credit_term_days' => null,
+            'outstanding_balance' => 0,
+            'credit_note' => null,
         ];
     }
 
@@ -44,6 +49,19 @@ class CustomerFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'is_active' => false,
+        ]);
+    }
+
+    /**
+     * Indicate that the customer is on credit payment.
+     */
+    public function credit(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'payment_type' => 'credit',
+            'credit_limit' => fake()->randomFloat(2, 10000, 100000),
+            'credit_term_days' => fake()->randomElement([30, 45, 60]),
+            'credit_note' => fake()->optional()->sentence(),
         ]);
     }
 }
