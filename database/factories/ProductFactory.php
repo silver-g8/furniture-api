@@ -20,14 +20,20 @@ class ProductFactory extends Factory
      */
     public function definition(): array
     {
+        $priceTagged = fake()->randomFloat(2, 1000, 50000);
+
         return [
             'category_id' => Category::factory(),
             'brand_id' => Brand::factory(),
             'name' => fake()->words(3, true),
             'sku' => fake()->unique()->bothify('SKU-####-????'),
             'description' => fake()->paragraph(),
-            'price' => fake()->randomFloat(2, 10, 10000),
-            'cost' => fake()->randomFloat(2, 5, 8000),
+            'price_tagged' => $priceTagged,
+            'price_discounted_tag' => $priceTagged * 0.95,
+            'price_discounted_net' => $priceTagged * 0.90,
+            'price_vat' => $priceTagged * 1.07,
+            'price_vat_credit' => $priceTagged * 1.07,
+            'cost' => $priceTagged * 0.3,
             'status' => fake()->randomElement(['draft', 'active', 'inactive', 'archived']),
             'on_hand' => fake()->numberBetween(0, 100),
         ];

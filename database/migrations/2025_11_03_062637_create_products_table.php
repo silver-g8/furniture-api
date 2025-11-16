@@ -20,7 +20,6 @@ return new class extends Migration
                 ->nullOnDelete();
             $table->string('name');
             $table->string('sku')->unique();
-            $table->decimal('price', 10, 2)->default(0);
             $table->enum('status', ['draft', 'active', 'inactive', 'archived'])->default('draft');
             $table->timestamps();
 

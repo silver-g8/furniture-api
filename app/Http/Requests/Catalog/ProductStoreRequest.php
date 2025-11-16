@@ -30,7 +30,7 @@ class ProductStoreRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'sku' => ['required', 'string', 'max:255', 'unique:products,sku'],
             'description' => ['nullable', 'string'],
-            'price' => ['required', 'numeric', 'min:0'],
+            'price' => ['nullable', 'numeric', 'min:0'], // Price not editable in form, default to 0
             'price_tagged' => ['nullable', 'numeric', 'min:0'],
             'price_discounted_tag' => ['nullable', 'numeric', 'min:0'],
             'price_discounted_net' => ['nullable', 'numeric', 'min:0'],

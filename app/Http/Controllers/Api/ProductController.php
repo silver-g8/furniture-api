@@ -146,13 +146,13 @@ class ProductController extends Controller
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(
-                required: ['sku', 'name', 'category_id', 'status', 'price', 'on_hand'],
+                required: ['sku', 'name', 'category_id', 'status', 'on_hand'],
                 properties: [
                     new OA\Property(property: 'sku', type: 'string', example: 'SOFA-001'),
                     new OA\Property(property: 'name', type: 'string', example: 'Modern Sofa'),
                     new OA\Property(property: 'description', type: 'string', example: 'Comfortable modern sofa', nullable: true),
                     new OA\Property(property: 'status', type: 'string', enum: ['draft', 'active', 'inactive', 'archived'], example: 'draft'),
-                    new OA\Property(property: 'price', type: 'number', format: 'float', example: 12900.0, minimum: 0),
+                    new OA\Property(property: 'price', type: 'number', format: 'float', example: 0.0, nullable: true, minimum: 0, description: 'Price not editable in form, defaults to 0'),
                     new OA\Property(property: 'cost', type: 'number', format: 'float', example: 8900.0, nullable: true, minimum: 0),
                     new OA\Property(property: 'category_id', type: 'integer', example: 1),
                     new OA\Property(property: 'brand_id', type: 'integer', example: 1, nullable: true),
@@ -235,7 +235,11 @@ class ProductController extends Controller
                     new OA\Property(property: 'name', type: 'string', example: 'Modern Sofa Deluxe'),
                     new OA\Property(property: 'description', type: 'string', example: 'Updated description', nullable: true),
                     new OA\Property(property: 'status', type: 'string', enum: ['draft', 'active', 'inactive', 'archived'], example: 'active'),
-                    new OA\Property(property: 'price', type: 'number', format: 'float', example: 13900.0, minimum: 0),
+                    new OA\Property(property: 'price_tagged', type: 'number', format: 'float', example: 15000.0, nullable: true, minimum: 0),
+                    new OA\Property(property: 'price_discounted_tag', type: 'number', format: 'float', example: 14500.0, nullable: true, minimum: 0),
+                    new OA\Property(property: 'price_discounted_net', type: 'number', format: 'float', example: 14000.0, nullable: true, minimum: 0),
+                    new OA\Property(property: 'price_vat', type: 'number', format: 'float', example: 15270.0, nullable: true, minimum: 0),
+                    new OA\Property(property: 'price_vat_credit', type: 'number', format: 'float', example: 15270.0, nullable: true, minimum: 0),
                     new OA\Property(property: 'cost', type: 'number', format: 'float', example: 9200.0, nullable: true, minimum: 0),
                     new OA\Property(property: 'category_id', type: 'integer', example: 2),
                     new OA\Property(property: 'brand_id', type: 'integer', example: 1, nullable: true),
@@ -323,7 +327,8 @@ class ProductController extends Controller
                 'name',
                 'category_name',
                 'brand_name',
-                'price',
+                // use price_tagged as the main price column
+                'price_tagged',
                 'on_hand',
                 'status',
                 'actions',
@@ -363,17 +368,6 @@ class ProductController extends Controller
                     'rules' => ['required'],
                     'props' => [
                         'option_source' => 'statuses',
-                    ],
-                ],
-                [
-                    'key' => 'price',
-                    'label' => 'catalog.products.fields.price',
-                    'component' => 'q-input',
-                    'rules' => ['required', 'numeric'],
-                    'props' => [
-                        'type' => 'number',
-                        'min' => 0,
-                        'step' => '0.01',
                     ],
                 ],
                 [
@@ -490,7 +484,8 @@ class ProductController extends Controller
                 'status',
                 'category_name',
                 'brand_name',
-                'price',
+                // display tagged price as the primary price
+                'price_tagged',
                 'on_hand',
                 'description',
             ],
@@ -727,7 +722,7 @@ class ProductController extends Controller
                 'name',
                 'description',
                 'status',
-                'price',
+                // base price field has been removed; price_tagged is the canonical price
                 'price_tagged',
                 'price_discounted_tag',
                 'price_discounted_net',

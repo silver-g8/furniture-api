@@ -25,7 +25,6 @@ class Product extends Model
         'name',
         'sku',
         'description',
-        'price',
         'price_tagged',
         'price_discounted_tag',
         'price_discounted_net',
@@ -43,7 +42,6 @@ class Product extends Model
      * @var array<string, string>
      */
     protected $casts = [
-        'price' => 'decimal:2',
         'price_tagged' => 'decimal:2',
         'price_discounted_tag' => 'decimal:2',
         'price_discounted_net' => 'decimal:2',
@@ -52,6 +50,15 @@ class Product extends Model
         'cost' => 'decimal:2',
         'on_hand' => 'int',
     ];
+
+    /**
+     * Backwards-compatible accessor for legacy code that still expects a price field.
+     * In the new model, price_tagged is the primary price representation.
+     */
+    public function getPriceAttribute(): ?float
+    {
+        return $this->price_tagged !== null ? (float) $this->price_tagged : null;
+    }
 
     /**
      * Get the category that owns the product.

@@ -12,7 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('products', function (Blueprint $table) {
-            $table->decimal('price_tagged', 10, 2)->nullable()->after('price')->comment('ราคาตั้งป้าย');
+            // products table no longer has a base "price" column, so attach new fields after status
+            $table->decimal('price_tagged', 10, 2)->nullable()->after('status')->comment('ราคาตั้งป้าย');
             $table->decimal('price_discounted_tag', 10, 2)->nullable()->after('price_tagged')->comment('ราคาลดป้าย');
             $table->decimal('price_discounted_net', 10, 2)->nullable()->after('price_discounted_tag')->comment('ราคาลดสุทธิ');
             $table->decimal('price_vat', 10, 2)->nullable()->after('price_discounted_net')->comment('ราคา vat');

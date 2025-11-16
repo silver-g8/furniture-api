@@ -18,9 +18,10 @@ return new class extends Migration
                 ->nullable()
                 ->after('name');
 
+            // products no longer have a base price column; attach cost after status instead
             $table->decimal('cost', 12, 2)
                 ->nullable()
-                ->after('price');
+                ->after('status');
         });
     }
 
