@@ -26,6 +26,13 @@ class Supplier extends Model
         'email',
         'address',
         'is_active',
+        'payment_terms',
+        'credit_days',
+        'credit_limit',
+        'tax_id',
+        'bank_name',
+        'bank_account_no',
+        'bank_account_name',
     ];
 
     /**
@@ -35,6 +42,8 @@ class Supplier extends Model
      */
     protected $casts = [
         'is_active' => 'boolean',
+        'credit_days' => 'integer',
+        'credit_limit' => 'decimal:2',
     ];
 
     /**
@@ -45,6 +54,36 @@ class Supplier extends Model
     public function purchases(): HasMany
     {
         return $this->hasMany(Purchase::class);
+    }
+
+    /**
+     * Get the AP invoices for the supplier.
+     *
+     * @return HasMany<ApInvoice, $this>
+     */
+    public function apInvoices(): HasMany
+    {
+        return $this->hasMany(ApInvoice::class, 'supplier_id');
+    }
+
+    /**
+     * Get the AP payments for the supplier.
+     *
+     * @return HasMany<ApPayment, $this>
+     */
+    public function apPayments(): HasMany
+    {
+        return $this->hasMany(ApPayment::class, 'supplier_id');
+    }
+
+    /**
+     * Get total outstanding balance for the supplier.
+     */
+    public function getOutstandingBalanceAttribute(): float
+    {
+        return (float) $this->apInvoices()
+            ->whereIn('status', ['issued', 'partially_paid'])
+            ->sum('open_amount');
     }
 
     /**

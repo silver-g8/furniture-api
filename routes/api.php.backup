@@ -1,8 +1,6 @@
 <?php
 
 use App\Http\Controllers\Api\Ar\ArInvoiceController;
-use App\Http\Controllers\Api\Ap\ApInvoiceController;
-use App\Http\Controllers\Api\Ap\ApPaymentController;
 use App\Http\Controllers\Api\Ar\ArReceiptController;
 use App\Http\Controllers\Api\AuditLogController;
 use App\Http\Controllers\Api\AuthController;
@@ -89,20 +87,6 @@ Route::prefix('v1')->group(function () {
             Route::apiResource('receipts', ArReceiptController::class)->only(['index', 'store', 'show', 'update']);
             Route::post('receipts/{receipt}/post', [ArReceiptController::class, 'post'])->name('ar.receipts.post');
             Route::post('receipts/{receipt}/cancel', [ArReceiptController::class, 'cancel'])->name('ar.receipts.cancel');
-        });
-
-        // AP routes
-        Route::prefix('ap')->group(function () {
-            Route::apiResource('invoices', ApInvoiceController::class)->only(['index', 'store', 'show', 'update']);
-            Route::post('invoices/{invoice}/issue', [ApInvoiceController::class, 'issue'])->name('ap.invoices.issue');
-            Route::post('invoices/{invoice}/cancel', [ApInvoiceController::class, 'cancel'])->name('ap.invoices.cancel');
-            Route::get('invoices/aging/report', [ApInvoiceController::class, 'aging'])->name('ap.invoices.aging');
-
-            Route::apiResource('payments', ApPaymentController::class)->only(['index', 'store', 'show', 'update']);
-            Route::post('payments/{payment}/post', [ApPaymentController::class, 'post'])->name('ap.payments.post');
-            Route::post('payments/{payment}/cancel', [ApPaymentController::class, 'cancel'])->name('ap.payments.cancel');
-            Route::post('payments/{payment}/auto-allocate', [ApPaymentController::class, 'autoAllocate'])->name('ap.payments.auto-allocate');
-            Route::get('payments/supplier/summary', [ApPaymentController::class, 'supplierSummary'])->name('ap.payments.supplier-summary');
         });
 
         // Installation routes

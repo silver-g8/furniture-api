@@ -76,6 +76,16 @@ class Purchase extends Model
     }
 
     /**
+     * Get the AP invoices for the purchase.
+     *
+     * @return HasMany<ApInvoice, $this>
+     */
+    public function apInvoices(): HasMany
+    {
+        return $this->hasMany(ApInvoice::class, 'purchase_id');
+    }
+
+    /**
      * Check if the purchase is in draft status.
      */
     public function isDraft(): bool
