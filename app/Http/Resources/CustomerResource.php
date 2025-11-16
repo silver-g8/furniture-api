@@ -24,6 +24,9 @@ class CustomerResource extends JsonResource
             'phone' => $this->phone,
             'email' => $this->email,
 
+            // สถานะการใช้งาน
+            'is_active' => (bool) $this->is_active,
+
             // กลุ่มลูกค้า
             'customer_group' => $this->customer_group,
             'customer_group_label' => $this->customer_group_label,
